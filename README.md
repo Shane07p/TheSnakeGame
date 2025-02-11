@@ -21,7 +21,7 @@ This is a simple console-based Snake game implemented in C++. The game features 
 
 - Arrow Keys or WASD: Move the snake
 
-- Game Over Condition: The game ends if the snake collides with the board boundaries.
+- Game Over Condition: The game ends if the snake collides with the board boundaries or collides with itself.
 ## How To Run
 
 1. Compile the program using a C++ compiler (MinGW/GCC recommended):
