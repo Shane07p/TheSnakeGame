@@ -14,8 +14,9 @@ This is a simple console-based Snake game implemented in C++. The game features 
 
 - Difficulty Levels: Players can choose from Easy, Medium, or Hard difficulty settings, affecting snake speed.
 
-- Score Tracking: The game tracks and displays the player's current and highest score.
+- Score Tracking: The game tracks and displays the player's current and highest score. It stores the high score of a unique ID.
 
+- Obstacles: The game spawns obstacles randomly and its position changes over the time and number of obstacles increase as level increase.
 
 ## Controls
 
@@ -39,6 +40,9 @@ This is a simple console-based Snake game implemented in C++. The game features 
 - The game requires windows.h for console manipulation and bits/stdc++.h for standard library usage.
 
 - It is intended for Windows OS due to the use of Sleep() and GetAsyncKeyState() functions.
+  
+- We also used SetConsoleTextAttribute() from windows.h to set colors for objects.
+  
 ## Authors
 
 - [@Shane07p](https://www.github.com/Shane07p)
