@@ -18,6 +18,8 @@ This is a simple console-based Snake game implemented in C++. The game features 
 
 - Obstacles: The game spawns obstacles randomly and its position changes over the time and number of obstacles increase as level increase.
 
+- Pause: On pressing 'p' game will pause and pressing 'r' game will resume.
+  
 ## Controls
 
 - Arrow Keys or WASD: Move the snake
