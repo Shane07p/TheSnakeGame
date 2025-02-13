@@ -235,13 +235,13 @@ public:
 
     // gets player input for direction of head and store in dir
     void get_input() {
-        if ((GetAsyncKeyState(VK_UP) || GetAsyncKeyState('W'))) {
+        if ((GetAsyncKeyState(VK_UP) || (GetAsyncKeyState('W')))) {
             if (dir != DOWN) dir = UP;
-        } else if ((GetAsyncKeyState(VK_DOWN) || GetAsyncKeyState('S'))) {
+        } else if ((GetAsyncKeyState(VK_DOWN) || (GetAsyncKeyState('S')))) {
             if (dir != UP) dir = DOWN;
-        } else if ((GetAsyncKeyState(VK_LEFT) || GetAsyncKeyState('A'))) {
+        } else if ((GetAsyncKeyState(VK_LEFT) || (GetAsyncKeyState('A')))) {
             if (dir != RIGHT) dir = LEFT;
-        } else if ((GetAsyncKeyState(VK_RIGHT) || GetAsyncKeyState('D'))) {
+        } else if ((GetAsyncKeyState(VK_RIGHT) || (GetAsyncKeyState('D')))) {
             if (dir != LEFT) dir = RIGHT;
         }
     }
@@ -406,6 +406,7 @@ int read_high_score(const string& player_name) {
     return high_score;
 }
 
+// Function to handle pause functionality
 void pause_game() {
     cout << "Game Paused! Press 'R' to Resume..." << endl;
     while (true) {
@@ -465,73 +466,75 @@ int main() {
 
     // Sets initial food position
     eat.reset_food_position(field);
-    bool is_paused = false;
+
+    bool is_paused = false; // Track pause state
+    bool pause_key_pressed = false; // Track if 'P' key was pressed
+
     // Loop until the player kills snake
     while (1) {
         if (!is_paused) {
-            // Game logic (e.g., snake movement, food check, etc.)
-            cout << "Game is running..." << endl;
+            field.clear_board(); // Clears board
+            player.get_input();  // Finds if user has pressed any key until previous execution of loop
 
-            // Simulate game delay
-            Sleep(100); // Adjust delay as needed
+            // Moves snake
+            try {
+                player.move();
+            }
+            catch (string err) {
+                field.clear_board();
+                cout << err << endl;
+                cout << "Player: " << player_name << endl;
+                cout << "Score: " << player.get_score() << endl;
+                cout << "Level: " << player.get_level() << endl;
+                if (player.get_score() > high_score) {
+                    high_score = player.get_score();
+                    cout << "New High Score!" << endl;
+                }
+                cout << "High Score: " << high_score << endl;
+
+                // Write scores to file
+                write_scores_to_file(player_name, player.get_score(), high_score);
+
+                system("pause"); // Pause system and wait for key press, MS Windows (NOT Linux)
+                return 0;
+            }
+
+            // Set food on board with color
+            setColor(10); // Green food
+            field.set_on_board(eat.get_food_y(), eat.get_food_x(), eat.get_food_symbol());
+            setColor(7); // Reset to default color
+
+            player.set_snake_onboard(field); // Set snake on board
+
+            // If snake(head) has found food, reset food randomly
+            if (player.food_found(eat)) {
+                eat.reset_food_position(field);
+            }
+
+            // Display the board and score
+            set_cursor_position(0, 4);     // Move cursor down before printing player name
+            show_player_name(player_name); // Display player's name
+            set_cursor_position(0, 6);     // Move cursor further down before printing the board
+            field.show_board();            // Prints board
+            cout << "Score: " << player.get_score() << endl;
+            cout << "Level: " << player.get_level() << endl;
+            cout << "High Score: " << high_score << endl;
         }
 
         // Check for pause key (e.g., 'P')
         if (_kbhit()) {
             char key = _getch();
-            if (key == 'P' || key == 'p') { // Pause on 'P' key
-                is_paused = true;
-                pause_game(); // Call pause function
-                is_paused = false; // Resume game
+            if (key == 'p') { // Pause on 'p' key
+                if (!pause_key_pressed) { // Only trigger once per key press
+                    is_paused = true;
+                    pause_game(); // Call pause function
+                    is_paused = false; // Resume game
+                    pause_key_pressed = true; // Mark key as pressed
+                }
+            } else {
+                pause_key_pressed = false; // Reset key state when 'P' is released
             }
         }
-        field.clear_board(); // Clears board
-        player.get_input();  // Finds if user has pressed any key until previous execution of loop
-
-        // Moves snake
-        try {
-            player.move();
-        }
-        catch (string err) {
-            field.clear_board();
-            cout << err << endl;
-            cout << "Player: " << player_name << endl;
-            cout << "Score: " << player.get_score() << endl;
-            cout << "Level: " << player.get_level() << endl;
-            if (player.get_score() > high_score) {
-                high_score = player.get_score();
-                cout << "New High Score!" << endl;
-            }
-            cout << "High Score: " << high_score << endl;
-
-            // Write scores to file
-            write_scores_to_file(player_name, player.get_score(), high_score);
-
-            system("pause"); // Pause system and wait for key press, MS Windows (NOT Linux)
-
-            return 0;
-        }
-
-        // Set food on board with color
-        setColor(10); // Green food
-        field.set_on_board(eat.get_food_y(), eat.get_food_x(), eat.get_food_symbol());
-        setColor(7); // Reset to default color
-
-        player.set_snake_onboard(field); // Set snake on board
-
-        // If snake(head) has found food, reset food randomly
-        if (player.food_found(eat)) {
-            eat.reset_food_position(field);
-        }
-
-        // Display the board and score
-        set_cursor_position(0, 4);     // Move cursor down before printing player name
-        show_player_name(player_name); // Display player's name
-        set_cursor_position(0, 6);     // Move cursor further down before printing the board
-        field.show_board();            // Prints board
-        cout << "Score: " << player.get_score() << endl;
-        cout << "Level: " << player.get_level() << endl;
-        cout << "High Score: " << high_score << endl;
 
         Sleep(sleep_time); // Windows.h --> milliseconds for which to stop execution
     }
