@@ -422,7 +422,7 @@ int main() {
     high_score = read_high_score(player_name);
     cout << "Your current high score: " << high_score << endl;
 
-    cout << "Choose difficulty level (1: Boards, 2: JEE Mains, 3: JEE Adv): ";
+    cout << "Choose difficulty level (1: Beginner, 2: Intermediate, 3: Advanced): ";
     cin >> difficulty;
 
     int sleep_time;
