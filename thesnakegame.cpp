@@ -1,5 +1,6 @@
 #include <bits/stdc++.h>
 #include <windows.h> // For MS Windows only
+#include <conio.h>
 using namespace std;
 
 // Function to set console text color
@@ -41,7 +42,7 @@ public:
         // dynamic memory allocation for board
         field = new char*[height + 2];
         for (int i = 0; i < height + 2; i++)
-            field[i] = new char[width + 2];
+            field[i] = new char[width + 2]; 
     }
 
     // Destructor
@@ -187,7 +188,7 @@ public:
         return symbol;
     }
 
-} eatable;
+} eat;
 
 // Snake class definition
 class Snake {
@@ -405,6 +406,19 @@ int read_high_score(const string& player_name) {
     return high_score;
 }
 
+void pause_game() {
+    cout << "Game Paused! Press 'R' to Resume..." << endl;
+    while (true) {
+        if (_kbhit()) { // Check if a key is pressed
+            char key = _getch(); // Get the pressed key
+            if (key == 'R' || key == 'r') { // Resume on 'R' key
+                cout << "Game Resumed!" << endl;
+                break;
+            }
+        }
+    }
+}
+
 // Main function
 int main() {
     string player_name;
@@ -450,9 +464,27 @@ int main() {
     field.generate_obstacles(5); // Start with 5 obstacles
 
     // Sets initial food position
-    eatable.reset_food_position(field);
+    eat.reset_food_position(field);
+    bool is_paused = false;
     // Loop until the player kills snake
     while (1) {
+        if (!is_paused) {
+            // Game logic (e.g., snake movement, food check, etc.)
+            cout << "Game is running..." << endl;
+
+            // Simulate game delay
+            Sleep(100); // Adjust delay as needed
+        }
+
+        // Check for pause key (e.g., 'P')
+        if (_kbhit()) {
+            char key = _getch();
+            if (key == 'P' || key == 'p') { // Pause on 'P' key
+                is_paused = true;
+                pause_game(); // Call pause function
+                is_paused = false; // Resume game
+            }
+        }
         field.clear_board(); // Clears board
         player.get_input();  // Finds if user has pressed any key until previous execution of loop
 
@@ -476,19 +508,20 @@ int main() {
             write_scores_to_file(player_name, player.get_score(), high_score);
 
             system("pause"); // Pause system and wait for key press, MS Windows (NOT Linux)
+
             return 0;
         }
 
         // Set food on board with color
         setColor(10); // Green food
-        field.set_on_board(eatable.get_food_y(), eatable.get_food_x(), eatable.get_food_symbol());
+        field.set_on_board(eat.get_food_y(), eat.get_food_x(), eat.get_food_symbol());
         setColor(7); // Reset to default color
 
         player.set_snake_onboard(field); // Set snake on board
 
         // If snake(head) has found food, reset food randomly
-        if (player.food_found(eatable)) {
-            eatable.reset_food_position(field);
+        if (player.food_found(eat)) {
+            eat.reset_food_position(field);
         }
 
         // Display the board and score
