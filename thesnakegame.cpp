@@ -405,18 +405,6 @@ int read_high_score(const string& player_name) {
     return high_score;
 }
 
-void pause_game() {
-    cout << "Game Paused! Press 'R' to Resume..." << endl;
-    while (true) {
-        // Check if 'R' key is pressed to resume
-        if (GetAsyncKeyState('R') & 0x8000) { // 0x8000 checks if the key is currently pressed
-            cout << "Game Resumed!" << endl;
-            break;
-        }
-        Sleep(100); // Small delay to avoid high CPU usage
-    }
-}
-
 // Main function
 int main() {
     string player_name;
@@ -463,30 +451,8 @@ int main() {
 
     // Sets initial food position
     eatable.reset_food_position(field);
-    bool is_paused = false;
-    bool pause_key_pressed = false; 
     // Loop until the player kills snake
     while (1) {
-        if (!is_paused) {
-            // Game logic (e.g., snake movement, food check, etc.)
-            cout << "Game is running..." << endl;
-
-            // Simulate game delay
-            Sleep(100); // Adjust delay as needed
-        }
-
-        // Check for pause key (e.g., 'P')
-        if (GetAsyncKeyState('P') & 0x8000) { // Check if 'P' key is pressed
-            if (!pause_key_pressed) { // Only trigger once per key press
-                is_paused = true;
-                pause_game(); // Call pause function
-                is_paused = false; // Resume game
-                pause_key_pressed = true; // Mark key as pressed
-            }
-        } else {
-            pause_key_pressed = false; // Reset key state when 'P' is released
-        }
-
         field.clear_board(); // Clears board
         player.get_input();  // Finds if user has pressed any key until previous execution of loop
 
