@@ -91,6 +91,10 @@ public:
                     setColor(10); // Green border
                     cout << field[i][j];
                     setColor(7); // Reset to default color
+                } else if (field[i][j] == '#') {
+                    setColor(9);
+                    cout << field[i][j];
+                    setColor(7);
                 } else {
                     cout << field[i][j];
                 }
@@ -400,6 +404,7 @@ int read_high_score(const string& player_name) {
 
     return high_score;
 }
+
 
 // Main function
 int main() {
