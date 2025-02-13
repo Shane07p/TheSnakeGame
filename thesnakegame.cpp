@@ -1,6 +1,11 @@
-#include<bits/stdc++.h>
-#include<windows.h> // For MS Windows only
+#include <bits/stdc++.h>
+#include <windows.h> // For MS Windows only
 using namespace std;
+
+// Function to set console text color
+void setColor(int color) {
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
+}
 
 // Classes declaration
 class Board;
@@ -12,7 +17,7 @@ class Snake;
 struct position {
     int x, y;
 
-    // Constructors
+    // Constructors 
     position() {}
     position(int a, int b) : x(a), y(b) {}
 };
@@ -23,6 +28,8 @@ private:
     int height, width; // height(along y), width(along x) of Playable Board
     char symbol;
     char** field;      // char 2D-array for storing values present on Board
+    vector<position> obstacles; // Store positions of obstacles
+
 public:
     // Constructor
     Board() {
@@ -46,11 +53,47 @@ public:
         delete[] field;
     }
 
+    // Add obstacle at position (x, y)
+    void add_obstacle(int x, int y) {
+        obstacles.push_back(position(x, y));
+        field[y][x] = '#'; // '#' represents an obstacle
+    }
+
+    // Generate random obstacles
+    void generate_obstacles(int num_obstacles) {
+        obstacles.clear(); // Clear existing obstacles
+        for (int i = 0; i < num_obstacles; i++) {
+            int x, y;
+            do {
+                x = 1 + rand() % width;
+                y = 1 + rand() % height;
+            } while (field[y][x] != ' '); // Ensure the position is empty
+            add_obstacle(x, y);
+        }
+    }
+
+    // Check if a position is an obstacle
+    bool is_obstacle(int x, int y) {
+        for (const auto& obs : obstacles) {
+            if (obs.x == x && obs.y == y)
+                return true;
+        }
+        return false;
+    }
+
     // print board on screen
     void show_board() {
+        cout << endl;
+     
         for (int i = 0; i < height + 2; i++) {
             for (int j = 0; j < width + 2; j++) {
-                cout << field[i][j];
+                if (i == 0 || i == height + 1 || j == 0 || j == width + 1) {
+                    setColor(10); // Green border
+                    cout << field[i][j];
+                    setColor(7); // Reset to default color
+                } else {
+                    cout << field[i][j];
+                }
             }
             cout << endl;
         }
@@ -72,6 +115,11 @@ public:
             field[i][0] = symbol;
         for (int i = 0; i < height + 2; i++)
             field[i][width + 1] = symbol;
+
+        // Re-add obstacles after clearing the board
+        for (const auto& obs : obstacles) {
+            field[obs.y][obs.x] = '#';
+        }
     }
 
     // returns board height
@@ -114,8 +162,10 @@ public:
 
     // randomly allocating food position on board with rand() function
     void reset_food_position(Board& field) {
-        food_point.x = 1 + rand() % field.get_board_width();
-        food_point.y = 1 + rand() % field.get_board_height();
+        do {
+            food_point.x = 1 + rand() % field.get_board_width();
+            food_point.y = 1 + rand() % field.get_board_height();
+        } while (field.is_obstacle(food_point.x, food_point.y)); // Ensure food doesn't spawn on an obstacle
     }
 
     // returns x-coordinate of food
@@ -144,14 +194,18 @@ private:
     position head;                           // position of snake's head on board
     enum direction { UP, DOWN, LEFT, RIGHT }; // directions of motion(w.r.t player in front of screen)
     direction dir;                           // current direction of motion of snake's head
+    int level;                               // current level of the game
+
 public:
     // Constructor
-    Snake(int x = 15, int y = 15) : body_head_symbol('@'), body_part_symbol('o'), dir(DOWN), body_size(1) {
-        // set position of head
-        position tmp(x, y);
-        body.push_back(tmp);
+    Snake(int x = 15, int y = 15) : body_head_symbol('@'), body_part_symbol('o'), dir(DOWN), body_size(3), level(1) {
+        // Set initial body positions
+        for (int i = 0; i < body_size; i++) {
+            position tmp(x, y - i); // Snake starts vertically downwards
+            body.push_back(tmp);
+        }
 
-        head = body[0];
+        head = body[0]; // Set head position
     }
 
     // returns x-coordinate of head
@@ -176,19 +230,19 @@ public:
 
     // gets player input for direction of head and store in dir
     void get_input() {
-        if ((GetAsyncKeyState(VK_UP) || GetAsyncKeyState('W')) && dir != DOWN)
-            dir = UP;
-        else if ((GetAsyncKeyState(VK_DOWN) || GetAsyncKeyState('S')) && dir != UP)
-            dir = DOWN;
-        else if ((GetAsyncKeyState(VK_LEFT) || GetAsyncKeyState('A')) && dir != RIGHT)
-            dir = LEFT;
-        else if ((GetAsyncKeyState(VK_RIGHT) || GetAsyncKeyState('D')) && dir != LEFT)
-            dir = RIGHT;
+        if ((GetAsyncKeyState(VK_UP) || GetAsyncKeyState('W'))) {
+            if (dir != DOWN) dir = UP;
+        } else if ((GetAsyncKeyState(VK_DOWN) || GetAsyncKeyState('S'))) {
+            if (dir != UP) dir = DOWN;
+        } else if ((GetAsyncKeyState(VK_LEFT) || GetAsyncKeyState('A'))) {
+            if (dir != RIGHT) dir = LEFT;
+        } else if ((GetAsyncKeyState(VK_RIGHT) || GetAsyncKeyState('D'))) {
+            if (dir != LEFT) dir = RIGHT;
+        }
     }
 
     // movement of snake
     void move() {
-        // stores modification in head
         position head_modify(0, 0);
         if (dir == UP)
             head_modify.y = -1;
@@ -199,18 +253,29 @@ public:
         else if (dir == LEFT)
             head_modify.x = -1;
 
-        // finds new head position
         position new_head(0, 0);
         new_head.x = body[0].x + head_modify.x;
         new_head.y = body[0].y + head_modify.y;
 
-        // update snake position
+        // Check for obstacle collision
+        if (field.is_obstacle(new_head.x, new_head.y)) {
+            throw (string)"SNAKE HIT AN OBSTACLE.....!!!!";
+        }
+
+        // Update snake position
         for (int i = body_size - 1; i > 0; i--)
             body[i] = body[i - 1];
         head = new_head;
         body[0] = head;
 
-        // Kills snake if it hits any wall
+        // Check for collision with body
+        for (int i = 1; i < body_size; i++) {
+            if (body[i].x == head.x && body[i].y == head.y) {
+                throw (string)"SNAKE DEAD.....!!!!";
+            }
+        }
+
+        // Check for wall collision
         if (head.x <= 0 || head.y <= 0 || head.x >= 1 + field.get_board_width() || head.y >= 1 + field.get_board_height()) {
             throw (string)"SNAKE DEAD.....!!!!";
         }
@@ -225,6 +290,13 @@ public:
             // adds a temporary position at end which is helpful while movement of snake(move method) after eating
             position tmp(0, 0);
             body.push_back(tmp);
+
+            // Check if the snake has grown enough to level up
+            if (body_size % 5 == 0) { // Level up every 5 foods
+                level++;
+                field.generate_obstacles(5 + level * 2); // Increase obstacles with level
+                cout << "Level Up! Current Level: " << level << endl;
+            }
             return true;
         }
         return false;
@@ -232,15 +304,24 @@ public:
 
     // set the snake's symbols on board at it's position
     void set_snake_onboard(Board& draw_here) {
+        setColor(12); // Red head
         field.set_on_board(head.y, head.x, body_head_symbol);
+        setColor(7); // Reset to default color
 
+        setColor(14); // Yellow body
         for (int i = 1; i < body.size(); i++)
             field.set_on_board(body[i].y, body[i].x, body_part_symbol);
+        setColor(7); // Reset to default color
     }
 
     // returns the current score (body size - 1)
     int get_score() {
-        return body_size - 1;
+        return body_size - 3;
+    }
+
+    // returns the current level
+    int get_level() {
+        return level;
     }
 
 } player; // object "player" of class "Snake"
@@ -262,16 +343,81 @@ void set_cursor_position(int x, int y) {
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
 }
 
+// Function to display the game title
+void show_title() {
+    setColor(11); // Cyan color
+    cout << "==============================================" << endl;
+    cout << "|               THE SNAKE GAME              |" << endl;
+    cout << "==============================================" << endl;
+    cout << endl;
+    setColor(7); // Reset to default color
+}
+
+// Function to display the player's name in a box
+void show_player_name(const string& name) {
+    setColor(13); // Magenta color
+    cout << "+---------------------+" << endl;
+    cout << "| Player: " << setw(12) << left << name << " |" << endl;
+    cout << "+---------------------+" << endl;
+    setColor(7); // Reset to default color
+}
+
+// Function to write scores to a file
+void write_scores_to_file(const string& player_name, int score, int high_score) {
+    ofstream outFile("scores.txt", ios::app); // Open file in append mode
+    if (outFile.is_open()) {
+        outFile << "Player: " << player_name << " | Score: " << score << " | High Score: " << high_score << endl;
+        outFile.close();
+    } else {
+        cerr << "Unable to open file to write scores!" << endl;
+    }
+}
+
+// Function to read the high score for a particular player
+int read_high_score(const string& player_name) {
+    ifstream inFile("scores.txt");
+    int high_score = 0;
+    string line;
+
+    if (inFile.is_open()) {
+        while (getline(inFile, line)) {
+            size_t pos = line.find("Player: " + player_name);
+            if (pos != string::npos) {
+                // Extract the high score from the line
+                size_t score_pos = line.find("High Score: ");
+                if (score_pos != string::npos) {
+                    int score = stoi(line.substr(score_pos + 12));
+                    if (score > high_score) {
+                        high_score = score;
+                    }
+                }
+            }
+        }
+        inFile.close();
+    } else {
+        cerr << "Unable to open file to read scores!" << endl;
+    }
+
+    return high_score;
+}
+
 // Main function
 int main() {
     string player_name;
     int high_score = 0;
     int difficulty;
 
+    // Display game title
+    show_title();
+
     cout << "Enter your name: ";
     cin >> player_name;
 
-    cout << "Choose difficulty level (1: Easy, 2: Medium, 3: Hard): ";
+    // Read the high score for the player
+    high_score = read_high_score(player_name);
+    cout << "Your current high score: " << high_score << endl;
+
+    cout << "Choose difficulty level (1: Boards, 2: JEE Mains, 3: JEE Adv): ";
     cin >> difficulty;
 
     int sleep_time;
@@ -296,6 +442,9 @@ int main() {
     // Current unix time in seconds as seed for rand function
     srand(time(0));
 
+    // Generate initial obstacles
+    field.generate_obstacles(5); // Start with 5 obstacles
+
     // Sets initial food position
     eatable.reset_food_position(field);
 
@@ -313,16 +462,25 @@ int main() {
             cout << err << endl;
             cout << "Player: " << player_name << endl;
             cout << "Score: " << player.get_score() << endl;
+            cout << "Level: " << player.get_level() << endl;
             if (player.get_score() > high_score) {
                 high_score = player.get_score();
                 cout << "New High Score!" << endl;
             }
             cout << "High Score: " << high_score << endl;
+
+            // Write scores to file
+            write_scores_to_file(player_name, player.get_score(), high_score);
+
             system("pause"); // Pause system and wait for key press, MS Windows (NOT Linux)
             return 0;
         }
 
-        field.set_on_board(eatable.get_food_y(), eatable.get_food_x(), eatable.get_food_symbol()); // Set food on board
+        // Set food on board with color
+        setColor(10); // Green food
+        field.set_on_board(eatable.get_food_y(), eatable.get_food_x(), eatable.get_food_symbol());
+        setColor(7); // Reset to default color
+
         player.set_snake_onboard(field); // Set snake on board
 
         // If snake(head) has found food, reset food randomly
@@ -331,10 +489,12 @@ int main() {
         }
 
         // Display the board and score
-        set_cursor_position(0, 0); // Move cursor to top-left corner
-        field.show_board(); // Prints board
-        cout << "Player: " << player_name << endl;
+        set_cursor_position(0, 4);     // Move cursor down before printing player name
+        show_player_name(player_name); // Display player's name
+        set_cursor_position(0, 6);     // Move cursor further down before printing the board
+        field.show_board();            // Prints board
         cout << "Score: " << player.get_score() << endl;
+        cout << "Level: " << player.get_level() << endl;
         cout << "High Score: " << high_score << endl;
 
         Sleep(sleep_time); // Windows.h --> milliseconds for which to stop execution
