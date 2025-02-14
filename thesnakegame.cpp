@@ -468,8 +468,7 @@ int main() {
     eat.reset_food_position(field);
 
     bool is_paused = false; // Track pause state
-    bool pause_key_pressed = false; // Track if 'P' key was pressed
-
+    
     // Loop until the player kills snake
     while (1) {
         if (!is_paused) {
@@ -525,14 +524,9 @@ int main() {
         if (_kbhit()) {
             char key = _getch();
             if (key == 'p') { // Pause on 'p' key
-                if (!pause_key_pressed) { // Only trigger once per key press
-                    is_paused = true;
-                    pause_game(); // Call pause function
-                    is_paused = false; // Resume game
-                    pause_key_pressed = true; // Mark key as pressed
-                }
-            } else {
-                pause_key_pressed = false; // Reset key state when 'P' is released
+                is_paused = true;
+                pause_game(); 
+                is_paused = false;
             }
         }
 
