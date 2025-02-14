@@ -47,7 +47,10 @@ This is a simple console-based Snake game implemented in C++. The game features 
   
 ## Authors
 
-- [@Shane07p](https://www.github.com/Shane07p)
+- Shane Christian
+- Bansil Bhanderi
+- Pranshu Chovatiya
+- Hari Patel
 
 
 ## License
