@@ -55,6 +55,5 @@ This is a simple console-based Snake game implemented in C++. The game features 
 
 ## License
 
-- This project is open-source and free to use for learning and personal projects.
-
+- This project is open-source and free to use.
 
